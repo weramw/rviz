@@ -47,41 +47,55 @@
 namespace rviz
 {
 MarkerBase::MarkerBase(MarkerDisplay* owner, DisplayContext* context, Ogre::SceneNode* parent_node)
-  : owner_(owner), context_(context), scene_node_(parent_node->createChildSceneNode())
+    : owner_(owner), context_(context), scene_node_(parent_node->createChildSceneNode())
 {
 }
 
 MarkerBase::~MarkerBase()
 {
-  context_->getSceneManager()->destroySceneNode(scene_node_);
+    context_->getSceneManager()->destroySceneNode(scene_node_);
 }
+
+void MarkerBase::setVisible(bool visible)
+{
+    scene_node_->setVisible(visible);
+}
+    
 
 void MarkerBase::setMessage(const Marker& message)
 {
-  // copy and save to shared pointer
-  MarkerConstPtr message_ptr(new Marker(message));
-  setMessage(message_ptr);
+    // copy and save to shared pointer
+    MarkerConstPtr message_ptr(new Marker(message));
+    setMessage(message_ptr);
 }
 
 void MarkerBase::setMessage(const MarkerConstPtr& message)
 {
-  MarkerConstPtr old = message_;
-  message_ = message;
+    MarkerConstPtr old = message_;
+    message_ = message;
 
-  expiration_ = ros::Time::now() + message->lifetime;
+    expiration_ = ros::Time::now() + message->lifetime;
 
-  onNewMessage(old, message);
+    onNewMessage(old, message);
 }
 
 void MarkerBase::updateFrameLocked()
 {
-  ROS_ASSERT(message_ && message_->frame_locked);
-  onNewMessage(message_, message_);
+    ROS_ASSERT(message_);
+    if(!message_->frame_locked){
+        return;
+    }
+    onNewMessage(message_, message_);
 }
 
-bool MarkerBase::expired()
+bool MarkerBase::expired()    
 {
-  return ros::Time::now() >= expiration_;
+    ROS_ASSERT(message_);
+    if(message_->lifetime.toSec() <= 0.0){
+        // never expire
+        return false;
+    }    
+    return ros::Time::now() >= expiration_;
 }
 
 bool MarkerBase::transform(const MarkerConstPtr& message,
@@ -89,67 +103,67 @@ bool MarkerBase::transform(const MarkerConstPtr& message,
                            Ogre::Quaternion& orient,
                            Ogre::Vector3& scale)
 {
-  ros::Time stamp = message->header.stamp;
-  if (message->frame_locked)
-  {
-    stamp = ros::Time();
-  }
-
-  if (!context_->getFrameManager()->transform(message->header.frame_id, stamp, message->pose, pos,
-                                              orient))
-  {
-    std::string error;
-    context_->getFrameManager()->transformHasProblems(message->header.frame_id, message->header.stamp,
-                                                      error);
-    if (owner_)
+    ros::Time stamp = message->header.stamp;
+    if (message->frame_locked)
     {
-      owner_->setMarkerStatus(getID(), StatusProperty::Error, error);
+        stamp = ros::Time();
     }
-    return false;
-  }
 
-  scale = Ogre::Vector3(message->scale.x, message->scale.y, message->scale.z);
+    if (!context_->getFrameManager()->transform(message->header.frame_id, stamp, message->pose, pos,
+                                                orient))
+    {
+        std::string error;
+        context_->getFrameManager()->transformHasProblems(message->header.frame_id, message->header.stamp,
+                                                          error);
+        if (owner_)
+        {
+            owner_->setMarkerStatus(getID(), StatusProperty::Error, error);
+        }
+        return false;
+    }
 
-  return true;
+    scale = Ogre::Vector3(message->scale.x, message->scale.y, message->scale.z);
+
+    return true;
 }
 
 void MarkerBase::setInteractiveObject(InteractiveObjectWPtr control)
 {
-  if (handler_)
-  {
-    handler_->setInteractiveObject(std::move(control));
-  }
+    if (handler_)
+    {
+        handler_->setInteractiveObject(std::move(control));
+    }
 }
 
 void MarkerBase::setPosition(const Ogre::Vector3& position)
 {
-  scene_node_->setPosition(position);
+    scene_node_->setPosition(position);
 }
 
 void MarkerBase::setOrientation(const Ogre::Quaternion& orientation)
 {
-  scene_node_->setOrientation(orientation);
+    scene_node_->setOrientation(orientation);
 }
 
 const Ogre::Vector3& MarkerBase::getPosition() const
 {
-  return scene_node_->getPosition();
+    return scene_node_->getPosition();
 }
 
 const Ogre::Quaternion& MarkerBase::getOrientation() const
 {
-  return scene_node_->getOrientation();
+    return scene_node_->getOrientation();
 }
 
 void MarkerBase::extractMaterials(Ogre::Entity* entity, S_MaterialPtr& materials)
 {
-  uint32_t num_sub_entities = entity->getNumSubEntities();
-  for (uint32_t i = 0; i < num_sub_entities; ++i)
-  {
-    Ogre::SubEntity* sub = entity->getSubEntity(i);
-    const Ogre::MaterialPtr& material = sub->getMaterial();
-    materials.insert(material);
-  }
+    uint32_t num_sub_entities = entity->getNumSubEntities();
+    for (uint32_t i = 0; i < num_sub_entities; ++i)
+    {
+        Ogre::SubEntity* sub = entity->getSubEntity(i);
+        const Ogre::MaterialPtr& material = sub->getMaterial();
+        materials.insert(material);
+    }
 }
 
 

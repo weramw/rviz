@@ -53,67 +53,69 @@ typedef std::set<Ogre::MaterialPtr> S_MaterialPtr;
 class MarkerBase
 {
 public:
-  typedef visualization_msgs::Marker Marker;
-  typedef visualization_msgs::Marker::ConstPtr MarkerConstPtr;
+    typedef visualization_msgs::Marker Marker;
+    typedef visualization_msgs::Marker::ConstPtr MarkerConstPtr;
 
-  MarkerBase(MarkerDisplay* owner, DisplayContext* context, Ogre::SceneNode* parent_node);
+    MarkerBase(MarkerDisplay* owner, DisplayContext* context, Ogre::SceneNode* parent_node);
 
-  virtual ~MarkerBase();
+    virtual ~MarkerBase();
 
-  void setMessage(const Marker& message);
-  void setMessage(const MarkerConstPtr& message);
-  bool expired();
+    void setMessage(const Marker& message);
+    void setMessage(const MarkerConstPtr& message);
+    bool expired();
 
-  void updateFrameLocked();
+    void updateFrameLocked();
 
-  const MarkerConstPtr& getMessage() const
-  {
-    return message_;
-  }
+    const MarkerConstPtr& getMessage() const
+        {
+            return message_;
+        }
 
-  MarkerID getID()
-  {
-    return MarkerID(message_->ns, message_->id);
-  }
-  std::string getStringID()
-  {
-    std::stringstream ss;
-    ss << message_->ns << "/" << message_->id;
-    return ss.str();
-  }
+    MarkerID getID()
+        {
+            return MarkerID(message_->ns, message_->id);
+        }
+    std::string getStringID()
+        {
+            std::stringstream ss;
+            ss << message_->ns << "/" << message_->id;
+            return ss.str();
+        }
 
-  /** @brief Associate an InteractiveObject with this MarkerBase. */
-  void setInteractiveObject(InteractiveObjectWPtr object);
+    /** @brief Associate an InteractiveObject with this MarkerBase. */
+    void setInteractiveObject(InteractiveObjectWPtr object);
 
-  virtual void setPosition(const Ogre::Vector3& position);
-  virtual void setOrientation(const Ogre::Quaternion& orientation);
-  const Ogre::Vector3& getPosition() const;
-  const Ogre::Quaternion& getOrientation() const;
+    virtual void setPosition(const Ogre::Vector3& position);
+    virtual void setOrientation(const Ogre::Quaternion& orientation);
+    const Ogre::Vector3& getPosition() const;
+    const Ogre::Quaternion& getOrientation() const;
 
-  virtual S_MaterialPtr getMaterials()
-  {
-    return S_MaterialPtr();
-  }
+    virtual S_MaterialPtr getMaterials()
+        {
+            return S_MaterialPtr();
+        }
+
+    void setVisible(bool visible);
 
 protected:
-  bool transform(const MarkerConstPtr& message,
-                 Ogre::Vector3& pos,
-                 Ogre::Quaternion& orient,
-                 Ogre::Vector3& scale);
-  virtual void onNewMessage(const MarkerConstPtr& old_message, const MarkerConstPtr& new_message) = 0;
+    bool transform(const MarkerConstPtr& message,
+                   Ogre::Vector3& pos,
+                   Ogre::Quaternion& orient,
+                   Ogre::Vector3& scale);
+    virtual void onNewMessage(const MarkerConstPtr& old_message, const MarkerConstPtr& new_message) = 0;
 
-  void extractMaterials(Ogre::Entity* entity, S_MaterialPtr& materials);
+    void extractMaterials(Ogre::Entity* entity, S_MaterialPtr& materials);
 
-  MarkerDisplay* owner_;
-  DisplayContext* context_;
+    MarkerDisplay* owner_;
+    DisplayContext* context_;
 
-  Ogre::SceneNode* scene_node_;
+    Ogre::SceneNode* scene_node_;
 
-  MarkerConstPtr message_;
+    MarkerConstPtr message_;
 
-  ros::Time expiration_;
+    ros::Time expiration_;
 
-  boost::shared_ptr<MarkerSelectionHandler> handler_;
+    boost::shared_ptr<MarkerSelectionHandler> handler_;
 };
 typedef boost::shared_ptr<MarkerBase> MarkerBasePtr;
 
